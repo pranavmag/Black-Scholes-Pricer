@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from pricer import BlackScholesPricer
+from pricer import BlackScholesPricer, generate_heat_map_grid
 
 app = FastAPI(title="Black-Scholes Pricing API")
 
@@ -28,6 +28,19 @@ def calculate_options(data: OptionInput):
         "call_price": round(call, 2),
         "put_price": round(put, 2),
     }
+
+@app.post("/calculate-heatmap")
+def calculate_heatmap(data: OptionInput):
+    heatmap_data = generate_heat_map_grid(
+        current_asset_price=data.current_asset_price,
+        strike_price=data.strike_price,
+        time_to_expiration=data.time_to_expiration,
+        risk_free_interest_rate=data.risk_free_interest_rate,
+        volatility=data.volatility
+    )
+
+    return heatmap_data
+
 
 if __name__ == "__main__":
     import uvicorn

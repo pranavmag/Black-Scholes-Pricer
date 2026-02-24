@@ -10,6 +10,7 @@
 
 import math
 from scipy.stats import norm
+import numpy as np
 
 class BlackScholesPricer:
     def __init__(self, current_asset_price, strike_price, time_to_expiration, risk_free_interest_rate, volatility):
@@ -44,3 +45,37 @@ pricer = BlackScholesPricer(
 
 print(f"Call Option Price: ${pricer.calculate_call_price():.2f}")
 print(f"Put Option Price: ${pricer.calculate_put_price():.2f}")
+
+
+def generate_heat_map_grid(current_asset_price, strike_price, time_to_expiration, risk_free_interest_rate, volatility, spot_shock_pct=0.20, vol_shock_pct=0.50, grid_points=10, min_vol=0.01):
+    spot_min = current_asset_price * (1 - spot_shock_pct)
+    spot_max = current_asset_price * (1 + spot_shock_pct)
+
+    spot_prices = np.linspace(spot_min, spot_max, grid_points)
+
+    vol_min = max(min_vol, volatility * (1 - vol_shock_pct))
+    vol_max = volatility * (1 + vol_shock_pct)
+
+    vols = np.linspace(vol_min, vol_max, grid_points)
+
+    call_grid = np.zeros((len(vols), len(spot_prices)))
+    put_grid = np.zeros((len(vols), len(spot_prices)))
+
+    for i, vol in enumerate(vols):
+        for j, spot in enumerate(spot_prices):
+            pricer = BlackScholesPricer(
+                current_asset_price=spot,
+                strike_price=strike_price,
+                time_to_expiration=time_to_expiration,
+                risk_free_interest_rate=risk_free_interest_rate,
+                volatility=vol
+            )
+            call_grid[i, j] = pricer.calculate_call_price()
+            put_grid[i, j] = pricer.calculate_put_price()
+
+    return {
+        "spot_prices": spot_prices.tolist(),
+        "volatilities": vols.tolist(),
+        "call_grid": call_grid.tolist(),
+        "put_grid": put_grid.tolist()
+    }
